@@ -1,0 +1,13 @@
+server:
+  port: 8080
+
+mysql:
+  # 请替换为你的数据库账号、密码和数据库名(假设叫 shdp)
+  dsn: "root:wangmengtao...33@tcp(127.0.0.1:3306)/shdp?charset=utf8mb4&parseTime=True&loc=Local"
+  max_idle_conns: 10
+  max_open_conns: 100
+
+redis:
+  addr: "127.0.0.1:6379"
+  password: "" # 如果没有密码留空
+  db: 0        # 默认使用 0 号库
