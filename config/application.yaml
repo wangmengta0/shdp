@@ -11,3 +11,7 @@ redis:
   addr: "127.0.0.1:6379"
   password: "" # 如果没有密码留空
   db: 0        # 默认使用 0 号库
+
+rabbitmq:
+  url: "amqp://guest:guest@127.0.0.1:5672/"
+  queue_name: "cache.delete.retry"

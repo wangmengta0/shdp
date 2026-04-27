@@ -24,3 +24,6 @@ func (repo *ShopRepo) QueryById(id int) (*model.Shop, error) {
 	}
 	return &shop, nil
 }
+func (repo *ShopRepo) Update(shop *model.Shop) error {
+	return repo.db.Model(&model.Shop{}).Where("id = ?", shop.ID).Updates(shop).Error
+}

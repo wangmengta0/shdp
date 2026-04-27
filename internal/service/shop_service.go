@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
+	"shdp/internal/middle/RabbitMQ"
 	"shdp/internal/model"
 	"shdp/internal/repository"
 	"shdp/pkg/utils"
@@ -113,6 +115,26 @@ func (s *ShopService) queryWithMutex(ctx context.Context, id int) (*model.Shop, 
 	finalTTL = utils.CacheShopTTL + jitter
 	s.rdb.Set(ctx, shopKey, string(shopBytes), finalTTL)
 	return shop, nil
+}
+func (s *ShopService) UpdateShop(ctx context.Context, shop *model.Shop) error {
+	if shop.ID == 0 {
+		return errors.New("商户ID不能为空")
+	}
+	err := s.repo.Update(shop)
+	if err != nil {
+		return errors.New("更新数据库失败")
+	}
+	shopKey := fmt.Sprintf("%s%d", utils.CacheShopKey, shop.ID)
+	err = s.rdb.Del(ctx, shopKey).Err()
+	if err != nil {
+		log.Printf("Redis删除失败，触发异步补偿: %s", shopKey)
+		if mqErr := RabbitMQ.PublishDeleteKey(shopKey); mqErr != nil {
+			log.Printf("MQ发送失败，这是极严重的事故，需记录审计日志或告警: %v", mqErr)
+			return errors.New("系统繁忙，请重试")
+		}
+		return errors.New("删除缓存失败")
+	}
+	return nil
 }
 func (s *ShopService) tryLock(ctx context.Context, lockKey string) bool {
 	ok, _ := s.rdb.SetNX(ctx, lockKey, "1", utils.LockShopTTL).Result()

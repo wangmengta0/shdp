@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"shdp/internal/middle/RabbitMQ"
 
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
@@ -27,7 +28,8 @@ func main() {
 
 	// 3. 初始化 Redis (go-redis)
 	rdb := initRedis()
-
+	RabbitMQ.InitRabbitMQ()
+	RabbitMQ.StartCacheDeleteConsumer(rdb)
 	// 4. 依赖注入：组装 MVC 各层
 	userRepo := repository.NewUserRepo(db)
 	userService := service.NewUserService(userRepo, rdb)
@@ -63,6 +65,7 @@ func initMySQL() *gorm.DB {
 	sqlDB.SetMaxOpenConns(config.Conf.MySQL.MaxOpenConns)
 
 	log.Println("MySQL 连接成功！")
+
 	return db
 }
 
