@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"shdp/internal/middle/RabbitMQ"
+	"shdp/pkg/utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
@@ -28,18 +29,30 @@ func main() {
 
 	// 3. 初始化 Redis (go-redis)
 	rdb := initRedis()
-	RabbitMQ.InitRabbitMQ()
-	RabbitMQ.StartCacheDeleteConsumer(rdb)
+
 	// 4. 依赖注入：组装 MVC 各层
 	userRepo := repository.NewUserRepo(db)
 	userService := service.NewUserService(userRepo, rdb)
 	userHandler := handler.NewUserHandler(userService)
 
+	voucherRepo := repository.NewVoucherRepo(db)
+	voucherService := service.NewVoucherService(voucherRepo, rdb)
+	voucherHandler := handler.NewVoucherHandler(voucherService)
+
+	RabbitMQ.InitRabbitMQ()
+	RabbitMQ.StartCacheDeleteConsumer(rdb)
+	RabbitMQ.StartSeckillOrderConsumer(voucherRepo)
+	handlers := handler.NewGroup(userHandler, voucherHandler)
+
+	err := utils.InitSnowflake(1)
+	if err != nil {
+		log.Fatalf("初始化雪花算法失败: %v", err)
+	}
 	// 5. 初始化 Gin 引擎
 	r := gin.Default()
 
 	// 6. 注册路由 (将 Redis 客户端传入以便中间件使用)
-	router.SetUpRouter(r, rdb, userHandler)
+	router.SetUpRouter(r, rdb, handlers)
 
 	// 7. 启动服务
 	addr := fmt.Sprintf(":%d", config.Conf.Server.Port)
