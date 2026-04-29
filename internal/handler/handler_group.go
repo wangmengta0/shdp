@@ -4,13 +4,15 @@ package handler
 type Group struct {
 	User    *UserHandler
 	Voucher *VoucherHandler
-	// 未来增加 ShopHandler、OrderHandler 直接往这里加即可
+	Blog    *BlogHandler
+	Follow  *FollowHandler // 新增
 }
 
-// NewGroup 统一的构造入口
-func NewGroup(user *UserHandler, voucher *VoucherHandler) *Group {
+func NewGroup(user *UserHandler, voucher *VoucherHandler, blog *BlogHandler, follow *FollowHandler) *Group {
 	return &Group{
 		User:    user,
 		Voucher: voucher,
+		Blog:    blog,
+		Follow:  follow,
 	}
 }

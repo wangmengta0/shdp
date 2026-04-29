@@ -38,11 +38,17 @@ func main() {
 	voucherRepo := repository.NewVoucherRepo(db)
 	voucherService := service.NewVoucherService(voucherRepo, rdb)
 	voucherHandler := handler.NewVoucherHandler(voucherService)
+	blogRepo := repository.NewBlogRepo(db)
+	blogService := service.NewBlogService(blogRepo, rdb, userRepo)
+	blogHandler := handler.NewBlogHandler(blogService)
+	followRepo := repository.NewFollowRepo(db)
+	followService := service.NewFollowService(followRepo, userRepo, rdb)
+	followHandler := handler.NewFollowHandler(followService)
 
 	RabbitMQ.InitRabbitMQ()
 	RabbitMQ.StartCacheDeleteConsumer(rdb)
 	RabbitMQ.StartSeckillOrderConsumer(voucherRepo)
-	handlers := handler.NewGroup(userHandler, voucherHandler)
+	handlers := handler.NewGroup(userHandler, voucherHandler, blogHandler, followHandler)
 
 	err := utils.InitSnowflake(1)
 	if err != nil {

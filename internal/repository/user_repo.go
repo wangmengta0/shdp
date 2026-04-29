@@ -1,7 +1,10 @@
 package repository
 
 import (
+	"fmt"
 	"shdp/internal/model"
+	"strconv"
+	"strings"
 
 	"gorm.io/gorm"
 )
@@ -26,4 +29,18 @@ func (r *UserRepo) QueryByPhone(phone string) (*model.User, error) {
 }
 func (r *UserRepo) CreateUser(user *model.User) error {
 	return r.db.Create(user).Error
+}
+func (r *UserRepo) QueryUsersByIdsOrdered(ids []int64) ([]*model.User, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	var users []*model.User
+	idStrs := make([]string, len(ids))
+	for i, id := range ids {
+		idStrs[i] = strconv.FormatInt(id, 10)
+	}
+	orderStr := fmt.Sprintf("FIELD(id, %s)", strings.Join(idStrs, ","))
+
+	err := r.db.Where("id IN ?", ids).Order(orderStr).Find(&users).Error
+	return users, err
 }

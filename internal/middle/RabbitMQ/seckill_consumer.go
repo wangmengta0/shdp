@@ -5,6 +5,7 @@ import (
 	"log"
 	"shdp/internal/model"
 	"shdp/internal/repository"
+	"strings"
 )
 
 func StartSeckillOrderConsumer(repo *repository.VoucherRepo) {
@@ -32,6 +33,11 @@ func StartSeckillOrderConsumer(repo *repository.VoucherRepo) {
 			}
 			err = repo.SeckillTransaction(order.VoucherID, &order)
 			if err != nil {
+				if strings.Contains(err.Error(), "Duplicate entry") {
+					log.Printf("⚠️ 触发幂等拦截：检测到重复投递的订单 [OrderID: %d]，直接丢弃该消息", order.ID)
+					d.Ack(false) // 核心：欺骗 MQ，告诉它这条消息处理“成功”了，从队列抹除
+					continue
+				}
 				log.Printf("订单异步落盘失败 [OrderID: %d], 原因: %v。正在重试...", order.ID, err)
 				// 真正的生产环境这里需要控制重试次数，防止毒消息堵塞队列
 				d.Nack(false, true)

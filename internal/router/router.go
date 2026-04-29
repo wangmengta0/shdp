@@ -27,6 +27,7 @@ func SetUpRouter(r *gin.Engine, rdb *redis.Client, handlers *handler.Group) {
 	{
 		// /api/user 相关私有接口
 		userPrivate := privateGroup.Group("/user")
+		blogPrivate := privateGroup.Group("/blog")
 		{
 			userPrivate.GET("/me", func(c *gin.Context) {
 				user, _ := c.Get("user")
@@ -35,12 +36,20 @@ func SetUpRouter(r *gin.Engine, rdb *redis.Client, handlers *handler.Group) {
 					"data":    user,
 				})
 			})
+			blogPrivate.PUT("/like/:id", handlers.Blog.LikeBlog)
+			blogPrivate.GET("/likes/:id", handlers.Blog.QueryBlogLikes)
 		}
 
 		// /api/voucher 相关私有接口 (逻辑拆分更清晰)
 		voucherPrivate := privateGroup.Group("/voucher")
 		{
 			voucherPrivate.POST("/seckill/:id", handlers.Voucher.Seckill)
+		}
+		followPrivate := privateGroup.Group("/follow")
+		{
+			followPrivate.PUT("/:id/:isFollow", handlers.Follow.Follow) // 关注/取关
+			followPrivate.GET("/or/not/:id", handlers.Follow.IsFollow)  // 是否关注
+			followPrivate.GET("/common/:id", handlers.Follow.Common)    // 共同关注
 		}
 	}
 }

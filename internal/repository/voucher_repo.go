@@ -23,7 +23,7 @@ func (r *VoucherRepo) SeckillTransaction(voucherID int64, order *model.VoucherOr
 	return r.db.Transaction(func(tx *gorm.DB) error {
 		result := tx.Model(&model.SeckillVoucher{}).
 			Where("voucher_id = ? AND stock>0", voucherID).
-			Update("stock", gorm.Expr("stock + 1"))
+			Update("stock", gorm.Expr("stock - 1"))
 		if result.Error != nil {
 			return result.Error //触发回滚
 		}
